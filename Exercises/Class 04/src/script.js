@@ -22,6 +22,10 @@ cam1.position.z = 5
 scene.add( cam1 )
 
 
+//axis helper
+const axesHelper = new THREE.AxesHelper(5)
+scene.add(axesHelper)
+
 //create renderer
 const canvas = document.querySelector('.webgl')
 const renderer = new THREE.WebGLRenderer({
