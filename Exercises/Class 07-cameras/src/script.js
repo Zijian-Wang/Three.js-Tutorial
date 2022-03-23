@@ -54,12 +54,57 @@ window.addEventListener('mousemove', (event) => {
 const controls = new OrbitControls( camera, canvas)
 controls.enableDamping = true
 controls.dampingFactor = 0.2
+// controls.enabled = false
 
 // Renderer
 const renderer = new THREE.WebGLRenderer({
     canvas: canvas
 })
 renderer.setSize(sizes.width, sizes.height)
+
+//make responsive window
+window.addEventListener( 'resize', () => {
+    // update sizes
+    sizes.width = window.innerWidth
+    sizes.height = window.innerHeight
+
+    //update camera
+    camera.aspect = sizes.width / sizes.height
+    camera.updateProjectionMatrix()
+
+    //update renderer
+    renderer.setSize( sizes.width, sizes.height )
+    renderer.setPixelRatio( Math.min(window.devicePixelRatio, 2) )
+})
+
+//add full screen function
+window.addEventListener('dblclick', () =>
+{
+    const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement
+
+    if(!fullscreenElement)
+    {
+        if(canvas.requestFullscreen)
+        {
+            canvas.requestFullscreen()
+        }
+        else if(canvas.webkitRequestFullscreen)
+        {
+            canvas.webkitRequestFullscreen()
+        }
+    }
+    else
+    {
+        if(document.exitFullscreen)
+        {
+            document.exitFullscreen()
+        }
+        else if(document.webkitExitFullscreen)
+        {
+            document.webkitExitFullscreen()
+        }
+    }
+})
 
 // Animate
 const clock = new THREE.Clock()
@@ -74,11 +119,11 @@ const tick = () =>
     //update camera
     const amplify = 3
 
-    //xy plane
+    //xy plane animation
     // camera.position.x = - cursor.x * amplify
     // camera.position.y = - cursor.y * amplify
 
-    //xz plane
+    //xz plane animation
     // camera.position.x = Math.cos( cursor.x * Math.PI * 1 ) * amplify
     // camera.position.z = Math.sin( cursor.x * Math.PI * 1 ) * amplify
     // camera.position.y = cursor.y * amplify
