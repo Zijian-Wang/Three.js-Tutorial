@@ -1,6 +1,16 @@
 import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import gsap from 'gsap'
+import GUI from 'lil-gui'
+
+// debug
+const gui = new GUI()
+
+const debugObject = {
+    color: 0x175fff, 
+    geoSubD: 5
+}
 
 /**
  * Base
@@ -19,12 +29,12 @@ const aspectRatio = sizes.width / sizes.height
 const scene = new THREE.Scene()
 
 // Object
-const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 1, 1, 5, 5, 5),
-    new THREE.MeshBasicMaterial({ color: 0xff0000 })
+const geometry = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 1, 1, debugObject.geoSubD, debugObject.geoSubD, debugObject.geoSubD),
+    new THREE.MeshBasicMaterial({ color: debugObject.color })
 )
 const axesHelper = new THREE.AxesHelper(2)
-scene.add(mesh, axesHelper)
+scene.add(geometry, axesHelper)
 
 // Camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 500)
@@ -32,7 +42,6 @@ const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 
 // camera.position.x = 2
 // camera.position.y = 2
 camera.position.set( 0, 2, 4 )
-camera.lookAt(mesh.position)
 scene.add(camera)
 
 //cursor
@@ -109,6 +118,27 @@ window.addEventListener('dblclick', () =>
 // Animate
 const clock = new THREE.Clock()
 
+// debug pannel add
+gui.add(geometry.position, 'x', -5, 5, 0.1 ).name('X Pos')
+gui.add(geometry.position, 'y', -5, 5, 0.1 ).name('Height')
+gui.add(geometry.position, 'z', -5, 5, 0.1 ).name('Z Pos')
+
+//another way to write method chaining
+gui
+    .add(geometry, 'visible')
+    .name('Show: ')
+    
+gui
+    .add(geometry.material, 'wireframe')
+
+gui
+    .addColor(debugObject, 'color')
+    .onChange( () => {
+        geometry.material.color.set(debugObject.color)
+    })
+
+
+
 const tick = () =>
 {
     // const elapsedTime = clock.getElapsedTime()
@@ -128,6 +158,9 @@ const tick = () =>
     // camera.position.z = Math.sin( cursor.x * Math.PI * 1 ) * amplify
     // camera.position.y = cursor.y * amplify
     //camera.lookAt(mesh.position)
+
+    camera.lookAt(geometry.position)
+    camera.updateProjectionMatrix()
 
     controls.update()
 
