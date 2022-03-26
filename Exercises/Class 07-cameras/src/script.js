@@ -9,7 +9,9 @@ const gui = new GUI()
 
 const debugObject = {
     color: 0x175fff, 
-    geoSubD: 5
+    spin: () => {
+        gsap.to( geometry.rotation, { duration: 2, y: geometry.rotation.y + Math.PI * 2})
+    }
 }
 
 /**
@@ -137,7 +139,8 @@ gui
         geometry.material.color.set(debugObject.color)
     })
 
-
+gui
+    .add(debugObject, 'spin')
 
 const tick = () =>
 {
