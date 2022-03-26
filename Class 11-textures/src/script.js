@@ -1,6 +1,34 @@
 import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { LoadingManager } from 'three'
+
+/**
+ * Texture
+ */
+const loadingManager = new THREE.LoadingManager()
+const textureLoader = new THREE.TextureLoader(loadingManager)
+// const doorColor = textureLoader.load('/textures/door/color.jpg')
+const doorColor = textureLoader.load('textures/minecraft.png')
+const doorAlpha = textureLoader.load('textures/door/alpha.jpg')
+const doorAO = textureLoader.load('textures/door/ambientOcclusion.jpg')
+const doorRoughness = textureLoader.load('textures/door/roughness.jpg')
+const doorNormal = textureLoader.load('textures/door/normal.jpg')
+const doorMetalness = textureLoader.load('textures/door/metalness.jpg')
+
+// doorColor.repeat.x = 5
+// doorColor.repeat.y = 5
+doorColor.wrapS = THREE.RepeatWrapping
+doorColor.wrapT = THREE.RepeatWrapping
+
+// doorColor.offset.x = 5.5
+// doorColor.rotation = Math.PI / 4
+// doorColor.center.x = 0.5
+// doorColor.center.y = 0.5
+
+doorColor.generateMipmaps = false
+doorColor.minFilter = THREE.NearestFilter
+doorColor.magFilter = THREE.NearestFilter
 
 /**
  * Base
@@ -15,7 +43,15 @@ const scene = new THREE.Scene()
  * Object
  */
 const geometry = new THREE.BoxGeometry(1, 1, 1)
-const material = new THREE.MeshBasicMaterial({ color: 0xff0000 })
+const material = new THREE.MeshBasicMaterial({
+    // alphaMap: doorAlpha, 
+    // aoMap: doorAO,
+    map: doorColor
+    // normalMap(doorNormal)
+    // matelnessMap(doorMetalness)
+    // roughnessMap(doorRoughness)
+})
+
 const mesh = new THREE.Mesh(geometry, material)
 scene.add(mesh)
 
