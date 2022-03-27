@@ -21,29 +21,38 @@ const scene = new THREE.Scene()
  */
 const ambientLight = new THREE.AmbientLight()
 ambientLight.color = new THREE.Color('white')
-ambientLight.intensity = 0.5
-// scene.add(ambientLight)
+ambientLight.intensity = 0.3
+scene.add(ambientLight)
 
-const areaLight = new THREE.RectAreaLight(0xffffff, 5, 1, 1)
+const areaLight = new THREE.RectAreaLight(0xffffff, 2, 1, 1)
 areaLight.position.set( 1, 1, 1)
 areaLight.lookAt(new THREE.Vector3(0, 0, 0))
 scene.add(areaLight)
-
+// areaLight.castShadow = true
 const arealightHelper = new RectAreaLightHelper(areaLight)
 scene.add(arealightHelper)
 
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5)
+directionalLight.castShadow = true
+directionalLight.shadow.mapSize.width = 2048
+directionalLight.shadow.mapSize.height = 2048
+directionalLight.shadow.blurSamples = 32
+scene.add(directionalLight)
 
-
-const spotLight = new THREE.SpotLight(0xffffff, 4, 8, Math.PI*0.15, 1, 1)
-spotLight.position.set(0, 3, 6)
+const spotLight = new THREE.SpotLight(0xffffff, 0.5, 5, Math.PI*0.15, 1, 1)
+spotLight.position.set(0, 3, 3)
 spotLight.target.position.set(0, 0, 0)
-window.addEventListener('mousemove', (event) => {
-    spotLight.target.position.x = (event.clientX/window.innerWidth - 0.5) * 10
-    // spotLight.target.position.y = event.clientY
-    window.requestAnimationFrame( () => {
-        spotlightHelper.update()
-    })
-})
+spotLight.castShadow = true
+spotLight.shadow.mapSize.width = 2048
+spotLight.shadow.mapSize.height = 2048
+spotLight.shadow.blurSamples = 32
+// window.addEventListener('mousemove', (event) => {
+//     spotLight.target.position.x = (event.clientX/window.innerWidth - 0.5) * 10
+//     // spotLight.target.position.y = event.clientY
+//     window.requestAnimationFrame( () => {
+//         spotlightHelper.update()
+//     })
+// })
 scene.add(spotLight, spotLight.target)
 
 const spotlightHelper = new THREE.SpotLightHelper(spotLight)
@@ -53,7 +62,15 @@ window.requestAnimationFrame( () => {
 })
 
 
-// gui.add(ambientLight, 'intensity').min(0).max(1).step(0.01)
+// const shadowMap = {
+//     resolution: 0
+// }
+// gui.add( shadowMap, 'resolution' ).min(0).max(4).step(1)
+// gui.onChange( () => {
+//     directionalLight.shadow.mapSize.width = Math.pow(2, 9 + shadowMap.resolution),
+//     directionalLight.shadow.mapSize.height = Math.pow(2, 9 + shadowMap.resolution),
+//     console.log(directionalLight.shadow.mapSize)
+// })
 
 /**
  * Objects
@@ -68,17 +85,20 @@ const sphere = new THREE.Mesh(
     material
 )
 sphere.position.x = - 1.5
+sphere.castShadow = true
 
 const cube = new THREE.Mesh(
     new THREE.BoxGeometry(0.75, 0.75, 0.75),
     material
 )
+cube.castShadow = true
 
 const torus = new THREE.Mesh(
     new THREE.TorusGeometry(0.3, 0.2, 32, 64),
     material
 )
 torus.position.x = 1.5
+torus.castShadow = true
 
 const plane = new THREE.Mesh(
     new THREE.PlaneGeometry(5, 5),
@@ -86,6 +106,7 @@ const plane = new THREE.Mesh(
 )
 plane.rotation.x = - Math.PI * 0.5
 plane.position.y = - 0.65
+plane.receiveShadow = true
 
 scene.add(sphere, cube, torus, plane)
 
@@ -134,6 +155,7 @@ const renderer = new THREE.WebGLRenderer({
 })
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+renderer.shadowMap.enabled = true
 
 /**
  * Animate
