@@ -2,6 +2,7 @@ import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'lil-gui'
+import { RectAreaLightHelper } from 'three/examples/jsm/helpers/RectAreaLightHelper.js'
 
 /**
  * Base
@@ -18,14 +19,41 @@ const scene = new THREE.Scene()
 /**
  * Lights
  */
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
-scene.add(ambientLight)
+const ambientLight = new THREE.AmbientLight()
+ambientLight.color = new THREE.Color('white')
+ambientLight.intensity = 0.5
+// scene.add(ambientLight)
 
-const pointLight = new THREE.PointLight(0xffffff, 0.5)
-pointLight.position.x = 2
-pointLight.position.y = 3
-pointLight.position.z = 4
-scene.add(pointLight)
+const areaLight = new THREE.RectAreaLight(0xffffff, 5, 1, 1)
+areaLight.position.set( 1, 1, 1)
+areaLight.lookAt(new THREE.Vector3(0, 0, 0))
+scene.add(areaLight)
+
+const arealightHelper = new RectAreaLightHelper(areaLight)
+scene.add(arealightHelper)
+
+
+
+const spotLight = new THREE.SpotLight(0xffffff, 4, 8, Math.PI*0.15, 1, 1)
+spotLight.position.set(0, 3, 6)
+spotLight.target.position.set(0, 0, 0)
+window.addEventListener('mousemove', (event) => {
+    spotLight.target.position.x = (event.clientX/window.innerWidth - 0.5) * 10
+    // spotLight.target.position.y = event.clientY
+    window.requestAnimationFrame( () => {
+        spotlightHelper.update()
+    })
+})
+scene.add(spotLight, spotLight.target)
+
+const spotlightHelper = new THREE.SpotLightHelper(spotLight)
+scene.add(spotlightHelper)
+window.requestAnimationFrame( () => {
+    spotlightHelper.update()
+})
+
+
+// gui.add(ambientLight, 'intensity').min(0).max(1).step(0.01)
 
 /**
  * Objects
