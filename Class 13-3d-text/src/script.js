@@ -10,7 +10,7 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
  * Base
  */
 // Debug
-const gui = new dat.GUI()
+// const gui = new dat.GUI()
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -23,6 +23,7 @@ const scene = new THREE.Scene()
  */
 const textureLoader = new THREE.TextureLoader()
 const matcapTexture = textureLoader.load('/textures/matcaps/3.png')
+const matcapTexture2 = textureLoader.load('/textures/matcaps/1.png')
 
 /**
  * Fonts
@@ -33,7 +34,7 @@ fontLoader.load(
     (font) => {
         // console.log('font loaded')
         const textGeo = new TextGeometry(
-            'Hellow Three.js!',
+            'Hello Three.js',
             {
                 font: font,
                 size: 0.5,
@@ -56,6 +57,7 @@ fontLoader.load(
         // )
         textGeo.center()
         const material = new THREE.MeshMatcapMaterial({matcap: matcapTexture})
+        const material2 = new THREE.MeshMatcapMaterial({matcap: matcapTexture2})
         // fontMaterial.wireframe = true
         const text = new THREE.Mesh(textGeo, material)
         scene.add(text)
@@ -65,7 +67,7 @@ fontLoader.load(
         console.time('donuts')
         for(let i = 0; i < 1000; i++){
             
-            const donut = new THREE.Mesh(donutGeo, material)
+            const donut = new THREE.Mesh(donutGeo, material2)
 
             donut.position.x = (Math.random() - 0.5) * 10
             donut.position.y = (Math.random() - 0.5) * 10
@@ -90,9 +92,9 @@ const cube = new THREE.Mesh(
     new THREE.BoxGeometry(1, 1, 1),
     new THREE.MeshBasicMaterial()
 )
-const axesHelper = new THREE.AxesHelper()
+// const axesHelper = new THREE.AxesHelper()
 
-scene.add(axesHelper)
+// scene.add(axesHelper)
 
 /**
  * Sizes
