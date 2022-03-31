@@ -21,57 +21,49 @@ scene.add(new THREE.AxesHelper(1))
  * Textures
  */
 const textureLoader = new THREE.TextureLoader()
+const particleAlphaTexture = textureLoader.load('textures/particles/2.png')
 
 /**
- * Galaxy
+ * Particles
  */
-const parameters = {
-    count: 3000,
-    particleSize: 10,
+// Geometry
+// const particleGeo = new THREE.SphereBufferGeometry(1, 32, 32)
+const particleGeo = new THREE.BufferGeometry()
+const count = 35000
+
+const positions = new Float32Array(count * 3)
+const pColor = new Float32Array(count * 3)
+
+for(let i = 0; i < count * 3; i++) {
+    positions[i] = (Math.random() -0.5) * 10
+    pColor[i] = Math.random()
 }
 
-let galaxyGeometry, galaxyMaterial, galaxyPoints
+particleGeo.setAttribute(
+    'position',
+    new THREE.BufferAttribute(positions, 3)
+)
+particleGeo.setAttribute(
+    'color',
+    new THREE.BufferAttribute(pColor, 3)
+)
 
-const generateGalaxy = () => {
-    console.log('Generating galaxy...')
+// Materials
+const particleMat = new THREE.PointsMaterial({
+    // color: '#BBDEFB',
+    vertexColors: true,
+    size: 0.1,
+    sizeAttenuation: true,
+    alphaMap: particleAlphaTexture,
+    transparent: true,
+    alphaTest: 0.1,
+    depthWrite: false,
+    blending: THREE.NormalBlending,
+})
 
-    const positions = new Float32Array(parameters.count * 3)
-    const galaxySize = 10
-    for(let i = 0; i < parameters.count; i++) {
-        positions[i * 3] = (Math.random() - 0.5) * galaxySize
-        positions[i * 3 + 1] = (Math.random() - 0.5) * galaxySize
-        positions[i * 3 + 2] = (Math.random() - 0.5) * galaxySize
-    }
-
-    if(galaxyGeometry == undefined) {
-        const galaxyGeometry = new THREE.BufferGeometry()
-        galaxyGeometry.setAttribute(
-            'position', 
-            new THREE.BufferAttribute(positions, 3)
-        )
-        const galaxyMaterial = new THREE.PointsMaterial({
-            color: 0xffffff,
-            alphaMap: textureLoader.load('/textures/particles/8.png'),
-            transparent: true,
-            size: parameters.particleSize,
-            sizeAttenuation: false,
-            alphaTest: 0.01,
-            depthWrite: false,
-            blending: THREE.AdditiveBlending,
-        })
-        const galaxyPoints = new THREE.Points( galaxyGeometry, galaxyMaterial )
-        scene.add(galaxyPoints)
-    } else {
-        galaxyGeometry.dispose()
-        galaxyMaterial.dispose()
-        scene.remove(galaxyPoints)
-    }
-}
-
-generateGalaxy()
-
-gui.add(parameters, 'count').min(0).max(1000).step(50).onFinishChange(generateGalaxy())
-gui.add(parameters, 'particleSize').min(0.1).max(50).step(0.1).onFinishChange(generateGalaxy())
+// Particle Points
+const particles = new THREE.Points(particleGeo, particleMat)
+scene.add(particles)
 
 // Test Cube
 // const cube = new THREE.BoxGeometry(1, 1, 1)
@@ -130,6 +122,18 @@ const clock = new THREE.Clock()
 const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
+    const amplitude = 0.1
+
+    // Update Particles 
+    for(let i = 0; i < count * 3; i += 3) {
+        
+        particleGeo.attributes.position.array[i+1] = Math.sin(elapsedTime + particleGeo.attributes.position.array[i]) * amplitude
+        // particleGeo.attributes.position.array[i+2] += (Math.random() - 0.5) * amplitude
+    }
+
+    particles.geometry.attributes.position.needsUpdate = true
+
+    
 
     // Update controls
     controls.update()
