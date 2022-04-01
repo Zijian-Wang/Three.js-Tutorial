@@ -26,14 +26,21 @@ const textureLoader = new THREE.TextureLoader()
  * Galaxy
  */
 const parameters = {
-    count: 3000,
-    size: 10,
+    count: 100000,
+    size: 1,
+    radius: 5,
+    branches: 5,
+    spin: 2,
+    randomness: 0.3,
+    randomnessPower: 3,
+    insideColor: '#FFB74D',
+    outsideColor: '#7C4DFF',
 }
 
 let geometry, material, points = null
 
 const generateGalaxy = () => {
-    console.log('Generating galaxy...')
+    // console.log('Generating galaxy...')
 
     // dispose the old system if it exists
     try {
@@ -50,17 +57,36 @@ const generateGalaxy = () => {
     geometry = new THREE.BufferGeometry()
 
     const positions = new Float32Array(parameters.count * 3)
+    const colors = new Float32Array(parameters.count * 3)
+    const insideColor = new THREE.Color(parameters.insideColor)
+    const outsideColor = new THREE.Color(parameters.outsideColor)
  
     for(let i = 0; i < parameters.count; i++)
     {
         const i3 = i * 3
 
-        positions[i3    ] = (Math.random() - 0.5) * 3
-        positions[i3 + 1] = (Math.random() - 0.5) * 3
-        positions[i3 + 2] = (Math.random() - 0.5) * 3
+        // Position
+        const radius = Math.random() * parameters.radius
+        const branchAngle = (i % parameters.branches) / parameters.branches * Math.PI * 2
+        const spinAngle = radius * parameters.spin
+
+        const randomX = Math.pow(Math.random(), parameters.randomnessPower) * (Math.random() > 0.5 ? 1 : -1) * parameters.randomness
+        const randomY = Math.pow(Math.random(), parameters.randomnessPower) * (Math.random() > 0.5 ? 1 : -1) * parameters.randomness
+        const randomZ = Math.pow(Math.random(), parameters.randomnessPower) * (Math.random() > 0.5 ? 1 : -1) * parameters.randomness
+
+        positions[i3 + 0] = Math.sin(branchAngle + spinAngle) * radius + randomX
+        positions[i3 + 1] = randomY
+        positions[i3 + 2] = Math.cos(branchAngle + spinAngle) * radius + randomZ
+
+        // Colors
+        const lerpedColor = insideColor.clone().lerp(outsideColor, radius / parameters.radius)
+        colors[i3 + 0] = lerpedColor.r
+        colors[i3 + 1] = lerpedColor.g
+        colors[i3 + 2] = lerpedColor.b
     }
  
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
 
     /**
      * Material
@@ -69,7 +95,8 @@ const generateGalaxy = () => {
         size: parameters.size,
         sizeAttenuation: false,
         depthWrite: false,
-        blending: THREE.AdditiveBlending
+        blending: THREE.AdditiveBlending,
+        vertexColors: true,
     })
 
     /**
@@ -85,14 +112,50 @@ generateGalaxy()
 gui
     .add(parameters, 'count')
     .min(0)
-    .max(1000)
+    .max(100000)
     .step(50)
     .onFinishChange(generateGalaxy)
 gui
     .add(parameters, 'size')
-    .min(0.1)
-    .max(50)
-    .step(0.1)
+    .min(0.01)
+    .max(2)
+    .step(0.001)
+    .onFinishChange(generateGalaxy)
+gui
+    .add(parameters, 'radius')
+    .min(5)
+    .max(10)
+    .step(0.01)
+    .onFinishChange(generateGalaxy)
+gui
+    .add(parameters, 'branches')
+    .min(2)
+    .max(12)
+    .step(1)
+    .onFinishChange(generateGalaxy)
+gui
+    .add(parameters, 'spin')
+    .min(-5)
+    .max(5)
+    .step(0.01)
+    .onFinishChange(generateGalaxy)
+gui
+    .add(parameters, 'randomness')
+    .min(0)
+    .max(1)
+    .step(0.001)
+    .onFinishChange(generateGalaxy)
+gui
+    .add(parameters, 'randomnessPower')
+    .min(1)
+    .max(10)
+    .step(0.001)
+    .onFinishChange(generateGalaxy)
+gui
+    .addColor(parameters, 'insideColor')
+    .onFinishChange(generateGalaxy)
+gui
+    .addColor(parameters, 'outsideColor')
     .onFinishChange(generateGalaxy)
 
 // Test Cube
@@ -128,7 +191,8 @@ window.addEventListener('resize', () =>
  */
 // Base camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.z = 3
+camera.position.set(2, 5, 3)
+camera.lookAt(scene.position)
 scene.add(camera)
 
 // Controls
