@@ -27,51 +27,73 @@ const textureLoader = new THREE.TextureLoader()
  */
 const parameters = {
     count: 3000,
-    particleSize: 10,
+    size: 10,
 }
 
-let galaxyGeometry, galaxyMaterial, galaxyPoints
+let geometry, material, points = null
 
 const generateGalaxy = () => {
     console.log('Generating galaxy...')
 
-    const positions = new Float32Array(parameters.count * 3)
-    const galaxySize = 10
-    for(let i = 0; i < parameters.count; i++) {
-        positions[i * 3] = (Math.random() - 0.5) * galaxySize
-        positions[i * 3 + 1] = (Math.random() - 0.5) * galaxySize
-        positions[i * 3 + 2] = (Math.random() - 0.5) * galaxySize
+    // dispose the old system if it exists
+    try {
+        geometry.dispose()
+        material.dispose()
+        scene.remove(points)
+    } catch (error){
+        // console.log('No galaxy to dispose')
     }
 
-    if(galaxyGeometry == undefined) {
-        const galaxyGeometry = new THREE.BufferGeometry()
-        galaxyGeometry.setAttribute(
-            'position', 
-            new THREE.BufferAttribute(positions, 3)
-        )
-        const galaxyMaterial = new THREE.PointsMaterial({
-            color: 0xffffff,
-            alphaMap: textureLoader.load('/textures/particles/8.png'),
-            transparent: true,
-            size: parameters.particleSize,
-            sizeAttenuation: false,
-            alphaTest: 0.01,
-            depthWrite: false,
-            blending: THREE.AdditiveBlending,
-        })
-        const galaxyPoints = new THREE.Points( galaxyGeometry, galaxyMaterial )
-        scene.add(galaxyPoints)
-    } else {
-        galaxyGeometry.dispose()
-        galaxyMaterial.dispose()
-        scene.remove(galaxyPoints)
+    /**
+     * Geometry
+     */
+    geometry = new THREE.BufferGeometry()
+
+    const positions = new Float32Array(parameters.count * 3)
+ 
+    for(let i = 0; i < parameters.count; i++)
+    {
+        const i3 = i * 3
+
+        positions[i3    ] = (Math.random() - 0.5) * 3
+        positions[i3 + 1] = (Math.random() - 0.5) * 3
+        positions[i3 + 2] = (Math.random() - 0.5) * 3
     }
+ 
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+
+    /**
+     * Material
+     */
+    material = new THREE.PointsMaterial({
+        size: parameters.size,
+        sizeAttenuation: false,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+    })
+
+    /**
+     * Points
+     */
+    points = new THREE.Points(geometry, material)
+    scene.add(points)
+    
 }
 
 generateGalaxy()
 
-gui.add(parameters, 'count').min(0).max(1000).step(50).onFinishChange(generateGalaxy())
-gui.add(parameters, 'particleSize').min(0.1).max(50).step(0.1).onFinishChange(generateGalaxy())
+gui
+    .add(parameters, 'count')
+    .min(0)
+    .max(1000)
+    .step(50)
+    .onFinishChange(generateGalaxy)
+gui
+    .add(parameters, 'size')
+    .min(0.1)
+    .max(50)
+    .step(0.1)
+    .onFinishChange(generateGalaxy)
 
 // Test Cube
 // const cube = new THREE.BoxGeometry(1, 1, 1)
