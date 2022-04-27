@@ -5,13 +5,14 @@ import Camera from "./Camera.js"
 import Renderer from "./Renderer.js"
 import World from "./World/World.js"
 import Resources from "./Utils/Resources.js"
+import Debug from "./Utils/Debug.js"
 import Sources from "./Sources.js"
 
 let instance = null
 
 export default class Experience {
     constructor(canvas) {
-        // single time instantiation
+        // single time instantiation·
         if (instance) {
             return instance
         }
@@ -20,6 +21,9 @@ export default class Experience {
 
         // Global access
         window.experience = this
+
+        // Debug
+        this.debug = new Debug()
 
         // Setup
         this.canvas = canvas
@@ -51,6 +55,26 @@ export default class Experience {
     update() {
         // console.log("update")
         this.camera.update()
+        this.world.update()
         this.renderer.update()
+    }
+
+    dispose() {
+        this.sizes.off("resize")
+        this.time.off("tick")
+
+        this.scene.traverse((object) => {
+            // console.log(object)
+            if (typeof object.dispose === "function") {
+                object.dispose()
+            }
+            console.log(object)
+        })
+
+        if (this.debug.active) {
+            this.debug.ui.destroy()
+        }
+
+        this.canvas.remove()
     }
 }
