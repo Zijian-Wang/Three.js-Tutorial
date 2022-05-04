@@ -2,7 +2,7 @@ import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-// import * as dat from 'lil-gui'
+// import * as dat from 'lil-gui'·
 
 /**
  * Base
@@ -72,6 +72,81 @@ const material = new THREE.MeshStandardMaterial({
   normalMap: normalTexture,
 })
 
+const customDepthMaterial = new THREE.MeshDepthMaterial({
+  depthPacking: THREE.RGBADepthPacking,
+})
+
+const customUniforms = {
+  uTime: { value: 0.0 }, // Uniform time for animation
+}
+
+material.onBeforeCompile = (shader) => {
+  // console.log(shader.vertexShader)
+  // console.log(shader.uniforms)
+  shader.uniforms.uTime = customUniforms.uTime
+  shader.vertexShader = shader.vertexShader.replace(
+    '#include <common>',
+    `
+    #include <common>
+
+    uniform float uTime;
+    
+    mat2 get2dRotateMatrix(float _angle){
+      return mat2(cos(_angle), -sin(_angle), sin(_angle), cos(_angle));
+    }
+    `
+  )
+  shader.vertexShader = shader.vertexShader.replace(
+    '#include <beginnormal_vertex>',
+    `
+      #include <beginnormal_vertex>
+      
+      float angle = sin(position.y + uTime) * 0.8;
+      mat2 rotateMatrix = get2dRotateMatrix(angle);
+
+      objectNormal.xz = rotateMatrix * objectNormal.xz;
+    `
+  )
+  shader.vertexShader = shader.vertexShader.replace(
+    '#include <begin_vertex>',
+    `
+      #include <begin_vertex>
+      
+      // float angle = (position.y + uTime) * 0.9;
+      // mat2 rotateMatrix = get2dRotateMatrix(angle);
+
+      transformed.xz = rotateMatrix * transformed.xz;
+    `
+  )
+}
+
+customDepthMaterial.onBeforeCompile = (shader) => {
+  shader.uniforms.uTime = customUniforms.uTime
+  shader.vertexShader = shader.vertexShader.replace(
+    '#include <common>',
+    `
+    #include <common>
+
+    uniform float uTime;
+    
+    mat2 get2dRotateMatrix(float _angle){
+      return mat2(cos(_angle), -sin(_angle), sin(_angle), cos(_angle));
+    }
+    `
+  )
+  shader.vertexShader = shader.vertexShader.replace(
+    '#include <begin_vertex>',
+    `
+      #include <begin_vertex>
+      
+      float angle = sin(position.y + uTime) * 0.8;
+      mat2 rotateMatrix = get2dRotateMatrix(angle);
+
+      transformed.xz = rotateMatrix * transformed.xz;
+    `
+  )
+}
+
 /**
  * Models
  */
@@ -80,11 +155,21 @@ gltfLoader.load('/models/LeePerrySmith/LeePerrySmith.glb', (gltf) => {
   const mesh = gltf.scene.children[0]
   mesh.rotation.y = Math.PI * 0.5
   mesh.material = material
+  mesh.customDepthMaterial = customDepthMaterial
   scene.add(mesh)
 
   // Update materials
   updateAllMaterials()
 })
+
+const plane = new THREE.Mesh(
+  new THREE.PlaneBufferGeometry(15, 15, 15),
+  new THREE.MeshStandardMaterial()
+)
+plane.rotation.y = Math.PI
+plane.position.y = -5
+plane.position.z = 5
+scene.add(plane)
 
 /**
  * Lights
@@ -135,6 +220,7 @@ scene.add(camera)
 // Controls
 const controls = new OrbitControls(camera, canvas)
 controls.enableDamping = true
+controls.dampingFactor = 0.5
 
 /**
  * Renderer
@@ -155,10 +241,13 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 /**
  * Animate
  */
-// const clock = new THREE.Clock()
+const clock = new THREE.Clock()
 
 const tick = () => {
-  //   const elapsedTime = clock.getElapsedTime()
+  const elapsedTime = clock.getElapsedTime()
+
+  // Update uTime
+  customUniforms.uTime.value = elapsedTime
 
   // Update controls
   controls.update()
