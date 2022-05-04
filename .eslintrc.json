@@ -8,6 +8,7 @@
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
+  "ignorePatterns": ["bundler/", "node_modules/"],
   "rules": {
     "no-unused-vars": ["warn"]
   }
