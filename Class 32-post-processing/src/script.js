@@ -9,6 +9,8 @@ import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass.js'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 import { RGBShiftShader } from 'three/examples/jsm/shaders/RGBShiftShader.js'
 import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader'
+import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
 import * as dat from 'lil-gui'
 
 /**
@@ -127,6 +129,7 @@ scene.add(camera)
 // Controls
 const controls = new OrbitControls(camera, canvas)
 controls.enableDamping = true
+controls.dampingFactor = 0.5
 
 /**
  * Renderer
@@ -139,15 +142,21 @@ renderer.shadowMap.enabled = true
 renderer.shadowMap.type = THREE.PCFShadowMap
 renderer.physicallyCorrectLights = true
 renderer.outputEncoding = THREE.sRGBEncoding
-renderer.toneMapping = THREE.CineonToneMapping
-renderer.toneMappingExposure = 1.5
+renderer.toneMapping = THREE.NoToneMapping
+renderer.toneMappingExposure = 1
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
 /**
  * Post processing
  */
-const effectComposer = new EffectComposer(renderer)
+
+// Custom render target
+const renderTarget = new THREE.WebGLRenderTarget(800, 600, {
+  samples: renderer.getPixelRatio() === 1 ? 2 : 0, // This is not supported on some Safari browsers, new features in WebGL 2.0.
+})
+
+const effectComposer = new EffectComposer(renderer, renderTarget)
 effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 effectComposer.setSize(sizes.width, sizes.height)
 
@@ -160,15 +169,66 @@ effectComposer.addPass(dotScreenPass)
 
 const glitchPass = new GlitchPass()
 // glitchPass.goWild = true
-glitchPass.enabled = true
+glitchPass.enabled = false
 effectComposer.addPass(glitchPass)
 
 const rgbShiftPass = new ShaderPass(RGBShiftShader)
 rgbShiftPass.enabled = false
 effectComposer.addPass(rgbShiftPass)
 
+const unrealBloomPass = new UnrealBloomPass()
+unrealBloomPass.resolution = new THREE.Vector2(sizes.width, sizes.height)
+unrealBloomPass.strength = 0.3
+unrealBloomPass.radius = 1
+unrealBloomPass.threshold = 0.6
+effectComposer.addPass(unrealBloomPass)
+// gui add unrealBloomPass
+gui.add(unrealBloomPass, 'enabled')
+gui.add(unrealBloomPass, 'strength', 0, 2, 0.001)
+gui.add(unrealBloomPass, 'radius', 0, 2, 0.001)
+gui.add(unrealBloomPass, 'threshold', 0, 1, 0.01)
+
+// Tint ShaderPass
+const TintShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    uTint: { value: null },
+  },
+  vertexShader: `
+    varying vec2 vUv;
+
+    void main() {
+      gl_Position = projectionMatrix * modelMatrix * viewMatrix * vec4(position, 1.0);
+      vUv = uv;
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform vec3 uTint;
+    varying vec2 vUv;
+
+    void main(){
+      vec4 color = texture2D(tDiffuse, vUv);
+      color.rgb += uTint;
+      gl_FragColor = color;
+    }
+  `,
+}
+const TintPass = new ShaderPass(TintShader)
+TintPass.uniforms.uTint.value = new THREE.Color('blueviolet')
+// effectComposer.addPass(TintPass)
+
+gui.addColor(TintPass.uniforms.uTint, 'value')
+
 const gammaCorrectionPass = new ShaderPass(GammaCorrectionShader)
 effectComposer.addPass(gammaCorrectionPass)
+
+if (renderer.getPixelRatio() === 1 && !renderer.capabilities.isWebGL2) {
+  console.log('pixelRatio is 1 and WebGL 2 not supported, add smaaPass.')
+  // Put antialias pass after the gammaCorrectionPass
+  const smaaPass = new SMAAPass(sizes.width, sizes.height)
+  effectComposer.addPass(smaaPass)
+}
 
 /**
  * Animate
